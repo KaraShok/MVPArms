@@ -25,10 +25,9 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.SupportActivity;
 import android.view.View;
 
+import com.jess.arms.integration.EventBusManager;
 import com.jess.arms.utils.Preconditions;
 import com.trello.rxlifecycle2.RxLifecycle;
-
-import org.simple.eventbus.EventBus;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -47,7 +46,6 @@ import io.reactivex.functions.Action;
 public class BasePresenter<M extends IModel, V extends IView> implements IPresenter, LifecycleObserver {
     protected final String TAG = this.getClass().getSimpleName();
     protected CompositeDisposable mCompositeDisposable;
-
     protected M mModel;
     protected V mRootView;
 
@@ -80,7 +78,6 @@ public class BasePresenter<M extends IModel, V extends IView> implements IPresen
         onStart();
     }
 
-
     @Override
     public void onStart() {
         //将 LifecycleObserver 注册给 LifecycleOwner 后 @OnLifecycleEvent 才可以正常使用
@@ -90,8 +87,8 @@ public class BasePresenter<M extends IModel, V extends IView> implements IPresen
                 ((LifecycleOwner) mRootView).getLifecycle().addObserver((LifecycleObserver) mModel);
             }
         }
-        if (useEventBus())//如果要使用 Eventbus 请将此方法返回 true
-            EventBus.getDefault().register(this);//注册 Eventbus
+        if (useEventBus())//如果要使用 EventBus 请将此方法返回 true
+            EventBusManager.getInstance().register(this);//注册 EventBus
     }
 
     /**
@@ -99,8 +96,8 @@ public class BasePresenter<M extends IModel, V extends IView> implements IPresen
      */
     @Override
     public void onDestroy() {
-        if (useEventBus())//如果要使用 Eventbus 请将此方法返回 true
-            EventBus.getDefault().unregister(this);//解除注册 Eventbus
+        if (useEventBus())//如果要使用 EventBus 请将此方法返回 true
+            EventBusManager.getInstance().unregister(this);//注销 EventBus
         unDispose();//解除订阅
         if (mModel != null)
             mModel.onDestroy();
@@ -128,14 +125,17 @@ public class BasePresenter<M extends IModel, V extends IView> implements IPresen
     }
 
     /**
-     * 是否使用 {@link EventBus},默认为使用(true)，
+     * 是否使用 EventBus
+     * Arms 核心库现在并不会依赖某个 EventBus, 要想使用 EventBus, 还请在项目中自行依赖对应的 EventBus
+     * 现在支持两种 EventBus, greenrobot 的 EventBus 和畅销书 《Android源码设计模式解析与实战》的作者 何红辉 所作的 AndroidEventBus
+     * 确保依赖后, 将此方法返回 true, Arms 会自动检测您依赖的 EventBus, 并自动注册
+     * 这种做法可以让使用者有自行选择三方库的权利, 并且还可以减轻 Arms 的体积
      *
-     * @return
+     * @return 返回 {@code true} (默认为使用 {@code true}), Arms 会自动注册 EventBus
      */
     public boolean useEventBus() {
         return true;
     }
-
 
     /**
      * 将 {@link Disposable} 添加到 {@link CompositeDisposable} 中统一管理
@@ -148,7 +148,7 @@ public class BasePresenter<M extends IModel, V extends IView> implements IPresen
         if (mCompositeDisposable == null) {
             mCompositeDisposable = new CompositeDisposable();
         }
-        mCompositeDisposable.add(disposable);//将所有 Disposable 放入集中处理
+        mCompositeDisposable.add(disposable);//将所有 Disposable 放入容器集中处理
     }
 
     /**
@@ -159,6 +159,4 @@ public class BasePresenter<M extends IModel, V extends IView> implements IPresen
             mCompositeDisposable.clear();//保证 Activity 结束时取消所有正在执行的订阅
         }
     }
-
-
 }

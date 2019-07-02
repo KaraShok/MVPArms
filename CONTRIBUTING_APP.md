@@ -8,15 +8,18 @@
 * [**养眼** : 这是一个基于 **MVPArms** 使用 **kotlin** 开发的 **看图 App** (**程序媛建议路过**) ](https://github.com/miaoMiaoDaShi/YangYanNew)
 
 #### Java
+* [**Hands-Chopping** : 这是一个基于 **MVPArms + ArmsComponent** 开发的包含 **Steam** 和 **杉果** 的组件化客户端](https://github.com/noterpopo/Hands-Chopping)
+* [**YeLearns** : 这是一个基于 **MVPArms** 开发的包含 **玩安卓、DIYcode、干货、微信资讯、游明星空** 等多个模块的客户端](https://github.com/yeyueduxing/YeLearns)
 * [**LQRBiliBlili** : 这是一个基于 **MVPArms** 开发的高仿 **bilibili** 安卓客户端 (**!!!请注意, 此项目在 GlobalConfiguration 中的部分配置是不正确的, 特别是对 Retrofit 的配置, 如非特殊需求, 请不要再一次给 Retrofit 设置新的 OkHttpClient, 框架内部已提供有 OkHttpClient, 请以官方 Demo 为准**)](https://github.com/GitLqr/LQRBiliBlili)
 * [**DiyCode** : 这是一个基于 **MVPArms** 开发的 **DiyCode** 社区客户端](https://github.com/linsneider/DiyCodeAndroid)
 * [**Ganamrs** : 这是一个基于 **MVPArms** 开发的 **Gank** 开源客户端](https://github.com/lianhuo/Ganamrs)
 * [**P2P** : 这是一个基于 **MVPArms** 开发的 **金融** 客户端](https://github.com/Everglowzz/P2P)
-* [**ZackShop** : 这是一个基于 **MVPArms** 开发的 **仿京东** 客户端](https://github.com/zhangqian666/shop-front-android)
+* [**ZackShop** : 这是一个基于 **MVPArms** 开发的 **仿京东** 客户端 (**!!!请注意, 此项目在 GlobalConfiguration 中的部分配置是不正确的, 特别是对 Retrofit 的配置, 如非特殊需求, 请不要再一次给 Retrofit 设置新的 OkHttpClient, 框架内部已提供有 OkHttpClient, 请以官方 Demo 为准**)](https://github.com/zhangqian666/shop-front-android)
 
 ### Framework
 * [**MVPFrames** : 这个项目是将 **MVPArms** 框架和 **MVPArt** 框架合并成一个通用型项目, 并增加了数据库](https://github.com/DesignQu/MVPFrames)
 * [**MVVMArms** : Android MVVM Architecture Components based on **MVPArms** and **Android Architecture Components**.](https://github.com/xiaobailong24/MVVMArms)
 * [**smartframework-android-atlas** : 这是一个将 **MVPArms** 框架和 **Atlas** 框架相结合的组件化 **MVP** 框架](https://github.com/smarthane/smartframework-android-atlas)
 * [**smartframework-android** : 这是一个将 **MVPArms** 框架和 **VirtualAPK** 框架相结合的插件化 **MVP** 框架](https://github.com/smarthane/smartframework-android)
+* [**Atoms-mvp** : 这是一个参考 **MVPArms** 框架, 将自己对框架的理解相结合的 **MVP** 框架](https://github.com/xwc520/Atoms-mvp)
 

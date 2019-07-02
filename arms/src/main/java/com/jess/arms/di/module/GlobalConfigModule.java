@@ -23,11 +23,10 @@ import android.text.TextUtils;
 import com.bumptech.glide.Glide;
 import com.jess.arms.http.BaseUrl;
 import com.jess.arms.http.GlobalHttpHandler;
+import com.jess.arms.http.imageloader.BaseImageLoaderStrategy;
 import com.jess.arms.http.log.DefaultFormatPrinter;
 import com.jess.arms.http.log.FormatPrinter;
 import com.jess.arms.http.log.RequestInterceptor;
-import com.jess.arms.http.imageloader.BaseImageLoaderStrategy;
-import com.jess.arms.http.imageloader.glide.GlideImageLoaderStrategy;
 import com.jess.arms.integration.cache.Cache;
 import com.jess.arms.integration.cache.CacheType;
 import com.jess.arms.integration.cache.IntelligentCache;
@@ -38,6 +37,11 @@ import com.jess.arms.utils.Preconditions;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Singleton;
 
@@ -46,6 +50,7 @@ import dagger.Provides;
 import me.jessyan.rxerrorhandler.handler.listener.ResponseErrorListener;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
+import okhttp3.internal.Util;
 
 /**
  * ================================================
@@ -73,6 +78,7 @@ public class GlobalConfigModule {
     private RequestInterceptor.Level mPrintHttpLogLevel;
     private FormatPrinter mFormatPrinter;
     private Cache.Factory mCacheFactory;
+    private ExecutorService mExecutorService;
 
     private GlobalConfigModule(Builder builder) {
         this.mApiUrl = builder.apiUrl;
@@ -89,12 +95,12 @@ public class GlobalConfigModule {
         this.mPrintHttpLogLevel = builder.printHttpLogLevel;
         this.mFormatPrinter = builder.formatPrinter;
         this.mCacheFactory = builder.cacheFactory;
+        this.mExecutorService = builder.executorService;
     }
 
     public static Builder builder() {
         return new Builder();
     }
-
 
     @Singleton
     @Provides
@@ -102,7 +108,6 @@ public class GlobalConfigModule {
     List<Interceptor> provideInterceptors() {
         return mInterceptors;
     }
-
 
     /**
      * 提供 BaseUrl,默认使用 <"https://api.github.com/">
@@ -121,7 +126,6 @@ public class GlobalConfigModule {
         return mApiUrl == null ? HttpUrl.parse("https://api.github.com/") : mApiUrl;
     }
 
-
     /**
      * 提供图片加载框架,默认使用 {@link Glide}
      *
@@ -129,10 +133,10 @@ public class GlobalConfigModule {
      */
     @Singleton
     @Provides
+    @Nullable
     BaseImageLoaderStrategy provideImageLoaderStrategy() {
-        return mLoaderStrategy == null ? new GlideImageLoaderStrategy() : mLoaderStrategy;
+        return mLoaderStrategy;
     }
-
 
     /**
      * 提供处理 Http 请求和响应结果的处理类
@@ -146,7 +150,6 @@ public class GlobalConfigModule {
         return mHandler;
     }
 
-
     /**
      * 提供缓存文件
      */
@@ -155,7 +158,6 @@ public class GlobalConfigModule {
     File provideCacheFile(Application application) {
         return mCacheFile == null ? DataHelper.getCacheFile(application) : mCacheFile;
     }
-
 
     /**
      * 提供处理 RxJava 错误的管理器的回调
@@ -167,7 +169,6 @@ public class GlobalConfigModule {
     ResponseErrorListener provideResponseErrorListener() {
         return mErrorListener == null ? ResponseErrorListener.EMPTY : mErrorListener;
     }
-
 
     @Singleton
     @Provides
@@ -205,7 +206,7 @@ public class GlobalConfigModule {
 
     @Singleton
     @Provides
-    FormatPrinter provideFormatPrinter(){
+    FormatPrinter provideFormatPrinter() {
         return mFormatPrinter == null ? new DefaultFormatPrinter() : mFormatPrinter;
     }
 
@@ -218,7 +219,7 @@ public class GlobalConfigModule {
             public Cache build(CacheType type) {
                 //若想自定义 LruCache 的 size, 或者不想使用 LruCache, 想使用自己自定义的策略
                 //使用 GlobalConfigModule.Builder#cacheFactory() 即可扩展
-                switch (type.getCacheTypeId()){
+                switch (type.getCacheTypeId()) {
                     //Activity、Fragment 以及 Extras 使用 IntelligentCache (具有 LruCache 和 可永久存储数据的 Map)
                     case CacheType.EXTRAS_TYPE_ID:
                     case CacheType.ACTIVITY_CACHE_TYPE_ID:
@@ -232,6 +233,18 @@ public class GlobalConfigModule {
         } : mCacheFactory;
     }
 
+    /**
+     * 返回一个全局公用的线程池,适用于大多数异步需求。
+     * 避免多个线程池创建带来的资源消耗。
+     *
+     * @return {@link Executor}
+     */
+    @Singleton
+    @Provides
+    ExecutorService provideExecutorService() {
+        return mExecutorService == null ? new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
+                new SynchronousQueue<Runnable>(), Util.threadFactory("Arms Executor", false)) : mExecutorService;
+    }
 
     public static final class Builder {
         private HttpUrl apiUrl;
@@ -248,6 +261,7 @@ public class GlobalConfigModule {
         private RequestInterceptor.Level printHttpLogLevel;
         private FormatPrinter formatPrinter;
         private Cache.Factory cacheFactory;
+        private ExecutorService executorService;
 
         private Builder() {
         }
@@ -282,12 +296,10 @@ public class GlobalConfigModule {
             return this;
         }
 
-
         public Builder responseErrorListener(ResponseErrorListener listener) {//处理所有RxJava的onError逻辑
             this.responseErrorListener = listener;
             return this;
         }
-
 
         public Builder cacheFile(File cacheFile) {
             this.cacheFile = cacheFile;
@@ -319,7 +331,7 @@ public class GlobalConfigModule {
             return this;
         }
 
-        public Builder formatPrinter(FormatPrinter formatPrinter){
+        public Builder formatPrinter(FormatPrinter formatPrinter) {
             this.formatPrinter = Preconditions.checkNotNull(formatPrinter, FormatPrinter.class.getCanonicalName() + "can not be null.");
             return this;
         }
@@ -329,12 +341,13 @@ public class GlobalConfigModule {
             return this;
         }
 
+        public Builder executorService(ExecutorService executorService) {
+            this.executorService = executorService;
+            return this;
+        }
+
         public GlobalConfigModule build() {
             return new GlobalConfigModule(this);
         }
-
-
     }
-
-
 }
